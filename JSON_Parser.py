@@ -33,7 +33,7 @@ def parse_number(input_string):
         final_output = float(data[0])
         return final_output, input_string[len(data[0]) :]
     final_output = int(data[0])
-    return final_output, input_string[len(data[0]) :]
+    return final_output, input_string[len(data[0]): ]
 
 
 def parse_string(input_string):
@@ -61,7 +61,6 @@ def parse_value(input_string):
         output = parser(input_string)
         if output is not None:
             return output
-    print("None is here 1")
     return None
 
 
@@ -71,13 +70,13 @@ def parse_array(input_string):
     input_string = input_string[1:]
     output_array = []
     while input_string[0] != "]":
-        input_string = input_string.lstrip(" ")
+        input_string = input_string.lstrip()
         if parse_value(input_string) is not None:
             output_array.append(parse_value(input_string)[0])
             input_string = parse_value(input_string)[1]
         else:
             return None
-        input_string = input_string.lstrip(" ")
+        input_string = input_string.lstrip()
         if input_string[0] == ",":
             if input_string[1] == "," or input_string[1] == "]":
                 return None
@@ -95,13 +94,13 @@ def parse_object(input_string):
     input_string = input_string[1:]
     output_object = {}
     while input_string[0] != "}":
-        input_string = input_string.lstrip(" ")
+        input_string = input_string.lstrip()
         key_string = parse_string(input_string)
         if key_string is None:
             return None
         parsed_key = key_string[0]
         input_string = key_string[1]
-        input_string = input_string.lstrip(" ")
+        input_string = input_string.lstrip()
         if input_string[0] != ":":
             return None
         else:
@@ -112,10 +111,10 @@ def parse_object(input_string):
             ):
                 return None
             input_string = input_string[1:]
-        input_string = input_string.lstrip(" ")
+        input_string = input_string.lstrip()
         output_object[parsed_key] = parse_value(input_string)[0]
         input_string = parse_value(input_string)[1]
-        input_string = input_string.lstrip(" ")
+        input_string = input_string.lstrip()
         if input_string[0] == ",":
             if input_string[1] == "," or input_string[1] == "}":
                 return None

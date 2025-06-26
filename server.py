@@ -1,15 +1,19 @@
 import socket
 from JSON_Parser import parse_json
+import json
+import threading
+import time
 
 hs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-hs.bind((socket.gethostname(), 2002))
+hs.bind(('localhost', 2002))
 hs.listen(5)
 
 
-def HTTP_non_body_parser(message):
+def HTTP_parser(message):
     message_array = message.split("\r\n")
     request_line_array = message_array[0].split(" ")
-    rest_line_array = message_array[1:-1]
+    rest_line_array = message_array[1:]
+    [request_lines, *headers] = message_array
     request_dict = {
         "Method": request_line_array[0],
         "URI": request_line_array[1],
@@ -22,18 +26,33 @@ def HTTP_non_body_parser(message):
     }
     return request_dict | rest_dict
 
+response_message = b"""HTTP/1.1 200 OK\r
+Content-Length: 18\r
 
-def HTTP_parser(message):
-    message_array = message.split("\r\n\r\n")
-    if message_array[1] == "":
-        return HTTP_non_body_parser(message)
-    request_body = message_array[1]
-    return HTTP_non_body_parser(message) | {"Body": parse_json(request_body)}
-
+Request Received!\n
+"""
+def server_response(clientsocket):
+    complete_message = ''
+    while '\r\n\r\n' not in complete_message:
+        message = clientsocket.recv(10).decode("utf-8")
+        complete_message += message
+    correct_complete_message = complete_message.split('\r\n\r\n')[0]
+    initial_body = complete_message.split('\r\n\r\n')[1]
+    parsed_request = HTTP_parser(correct_complete_message)
+    if "Content-Length" in parsed_request.keys():
+        if parsed_request["Content-Type"] == "application/json":
+            msg_len = int(parsed_request["Content-Length"])
+            request_body = clientsocket.recv(msg_len).decode("utf-8")
+            complete_body = (initial_body + request_body).rstrip()
+            parsed_request["Body"] = parse_json(complete_body)      
+    print(f"This is the complete request: {parsed_request}")
+    time.sleep(2)
+    clientsocket.send(response_message)
+    clientsocket.shutdown(socket.SHUT_WR)
+    clientsocket.close()
 
 while True:
     clientsocket, address = hs.accept()
-    message = clientsocket.recv(10000).decode("utf-8")
-    print(HTTP_parser(message))
-    send_message = "Thank you for the request!"
-    clientsocket.send(bytes(send_message, "utf-8"))
+    t = threading.Thread(target=server_response, args=(clientsocket,))
+    t.start()
+hs.close()
