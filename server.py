@@ -25,14 +25,13 @@ def http_parser(message):
 
 
 def server_response(conn_socket):
-    complete_message = ""
-    while "\r\n\r\n" not in complete_message:
-        message = conn_socket.recv(1).decode("utf-8")
+    complete_message = b""
+    while b"\r\n\r\n" not in complete_message:
+        message = conn_socket.recv(10)
         complete_message += message
-    correct_complete_message = complete_message.split("\r\n\r\n")[0]
-    initial_body = complete_message.split("\r\n\r\n")[1]
-    parsed_request = http_parser(correct_complete_message)
-
+    request_line_headers = complete_message.split(b"\r\n\r\n")[0]
+    initial_body = complete_message.split(b"\r\n\r\n")[1]
+    parsed_request = http_parser(request_line_headers.decode("utf-8"))
     if parsed_request["URI"] not in URLS:
         conn_socket.send(
             b"""HTTP/1.1 404 NOT FOUND\r
@@ -41,23 +40,26 @@ def server_response(conn_socket):
                         Resource requested does not exist!\n
                          """
         )
-        print(f"Resource: {parsed_request["URI"]} does not exist")
         conn_socket.shutdown(socket.SHUT_WR)
         conn_socket.close()
         return
+
     if "Content-Length" in parsed_request.keys():
-        msg_len = int(parsed_request["Content-Length"])
-        request_body = conn_socket.recv(msg_len).decode("utf-8")
-        complete_body = (initial_body + request_body).rstrip()
+        msg_len = int(parsed_request["Content-Length"]) - len(initial_body)
+        request_body = b""
+        while len(request_body) < msg_len:
+            request_body += conn_socket.recv(1)
+        complete_body = (initial_body + request_body).decode("utf-8").rstrip()
         if parsed_request["Content-Type"] == "application/json":
             parsed_request["Body"] = parse_json(complete_body)
     print(f"This is the complete request: {parsed_request}")
     URLS[parsed_request["URI"]](conn_socket)
+
     conn_socket.shutdown(socket.SHUT_WR)
     conn_socket.close()
 
 
-def root_function(s):
+def home_page(s):
     s.send(
         b"""HTTP/1.1 200 OK\r
 
@@ -66,18 +68,25 @@ def root_function(s):
     )
 
 
-def books_function(s):
+def books(s):
     s.send(
         b"""HTTP/1.1 200 OK\r
-
-        Content-Length: 6\r
 
                     BOOKS!\n
                     """
     )
 
 
-URLS = {"/": root_function, "/books": books_function}
+def book_details(s, isbn):
+    string_response = f"""HTTP/1.1 200 OK\r
+
+    Please read book: {isbn}n
+    """
+    bytes_response = string_response.encode("utf-8")
+    s.send(bytes_response)
+
+
+URLS = {"/": home_page, "/books": books, "/books/12": book_details}
 
 
 while True:
