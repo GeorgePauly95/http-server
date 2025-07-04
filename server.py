@@ -1,6 +1,8 @@
 import socket
 import threading
+import routing
 from JSON_Parser import parse_json
+from controllers import not_found
 
 hs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 hs.bind(("localhost", 2002))
@@ -32,17 +34,6 @@ def server_response(conn_socket):
     request_line_headers = complete_message.split(b"\r\n\r\n")[0]
     initial_body = complete_message.split(b"\r\n\r\n")[1]
     parsed_request = http_parser(request_line_headers.decode("utf-8"))
-    if parsed_request["URI"] not in URLS:
-        conn_socket.send(
-            b"""HTTP/1.1 404 NOT FOUND\r
-                        Content-Length: 34\r
-
-                        Resource requested does not exist!\n
-                         """
-        )
-        conn_socket.shutdown(socket.SHUT_WR)
-        conn_socket.close()
-        return
 
     if "Content-Length" in parsed_request.keys():
         msg_len = int(parsed_request["Content-Length"]) - len(initial_body)
@@ -52,46 +43,29 @@ def server_response(conn_socket):
         complete_body = (initial_body + request_body).decode("utf-8").rstrip()
         if parsed_request["Content-Type"] == "application/json":
             parsed_request["Body"] = parse_json(complete_body)
-    print(f"This is the complete request: {parsed_request}")
-    URLS[parsed_request["URI"]](conn_socket)
-
-    conn_socket.shutdown(socket.SHUT_WR)
-    conn_socket.close()
-
-
-def home_page(s):
-    s.send(
-        b"""HTTP/1.1 200 OK\r
-
-                     root!\n
-                     """
-    )
-
-
-def books(s):
-    s.send(
-        b"""HTTP/1.1 200 OK\r
-
-                    BOOKS!\n
-                    """
-    )
-
-
-def book_details(s, isbn):
-    string_response = f"""HTTP/1.1 200 OK\r
-
-    Please read book: {isbn}n
-    """
-    bytes_response = string_response.encode("utf-8")
-    s.send(bytes_response)
-
-
-URLS = {"/": home_page, "/books": books, "/books/12": book_details}
+    ctrl_fn = routing.route_matcher(parsed_request["URI"])
+    print(type(ctrl_fn))
+    if type(ctrl_fn).__name__ == "NoneType":
+        not_found(conn_socket)
+        conn_socket.shutdown(socket.SHUT_WR)
+        conn_socket.close()
+    elif type(ctrl_fn).__name__ == "tuple":
+        if type(ctrl_fn[1][0]).__name__ == "tuple":
+            ctrl_fn[0](conn_socket, *ctrl_fn[1][0])
+            conn_socket.shutdown(socket.SHUT_WR)
+            conn_socket.close()
+        else:
+            ctrl_fn[0](conn_socket, ctrl_fn[1][0])
+            conn_socket.shutdown(socket.SHUT_WR)
+            conn_socket.close()
+    elif type(ctrl_fn).__name__ == "function":
+        ctrl_fn(conn_socket)
+        conn_socket.shutdown(socket.SHUT_WR)
+        conn_socket.close()
 
 
 while True:
     conn_socket, address = hs.accept()
     t = threading.Thread(target=server_response, args=(conn_socket,))
     t.start()
-
 hs.close()
