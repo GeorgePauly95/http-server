@@ -5,8 +5,12 @@ from JSON_Parser import parse_json
 from controllers import not_found
 
 hs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print(socket.AF_INET)
+print(socket.SOCK_STREAM)
 hs.bind(("localhost", 2002))
 hs.listen(5)
+
+# rename and modularize
 
 
 def http_parser(message):
@@ -33,7 +37,7 @@ def server_response(conn_socket):
         complete_message += message
     request_line_headers = complete_message.split(b"\r\n\r\n")[0]
     initial_body = complete_message.split(b"\r\n\r\n")[1]
-    parsed_request = http_parser(request_line_headers.decode("utf-8"))
+    parsed_request = http_parser(message=request_line_headers.decode("utf-8"))
 
     if "Content-Length" in parsed_request.keys():
         msg_len = int(parsed_request["Content-Length"]) - len(initial_body)
@@ -45,6 +49,7 @@ def server_response(conn_socket):
             parsed_request["Body"] = parse_json(complete_body)
     ctrl_fn = routing.route_matcher(parsed_request["URI"])
     print(type(ctrl_fn))
+    # dunder not required
     if type(ctrl_fn).__name__ == "NoneType":
         not_found(conn_socket)
         conn_socket.shutdown(socket.SHUT_WR)
