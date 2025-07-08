@@ -3,17 +3,14 @@ import threading
 import routing
 from JSON_Parser import parse_json
 from controllers import not_found
+from request import Request
 
 hs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print(socket.AF_INET)
-print(socket.SOCK_STREAM)
 hs.bind(("localhost", 2002))
 hs.listen(5)
 
 # rename and modularize
-
-
-def http_parser(message):
+def request_line_headers_parser(message):
     message_array = message.split("\r\n")
     [request_lines, *headers] = message_array
     request_line_array = request_lines.split(" ")
@@ -27,30 +24,41 @@ def http_parser(message):
         for header in headers
         if header != ""
     }
-    return request_dict | rest_dict
+    return request_dict | {"headers": rest_dict}
 
 
-def server_response(conn_socket):
+def http_request_parser(conn_socket):
     complete_message = b""
     while b"\r\n\r\n" not in complete_message:
         message = conn_socket.recv(10)
         complete_message += message
-    request_line_headers = complete_message.split(b"\r\n\r\n")[0]
-    initial_body = complete_message.split(b"\r\n\r\n")[1]
-    parsed_request = http_parser(message=request_line_headers.decode("utf-8"))
-
-    if "Content-Length" in parsed_request.keys():
-        msg_len = int(parsed_request["Content-Length"]) - len(initial_body)
+    request_line_headers, initial_body = complete_message.split(b"\r\n\r\n")
+    parsed_request = request_line_headers_parser(message=request_line_headers.decode("utf-8"))
+    if "Content-Length" in parsed_request["headers"].keys():
+        msg_len = int(parsed_request["headers"]["Content-Length"]) - len(initial_body)
         request_body = b""
         while len(request_body) < msg_len:
             request_body += conn_socket.recv(1)
         complete_body = (initial_body + request_body).decode("utf-8").rstrip()
-        if parsed_request["Content-Type"] == "application/json":
+        if parsed_request["headers"]["Content-Type"] == "application/json":
             parsed_request["Body"] = parse_json(complete_body)
-    ctrl_fn = routing.route_matcher(parsed_request["URI"])
-    print(type(ctrl_fn))
+            request = Request(parsed_request)
+            request.body = parsed_request["Body"]
+            server_response(request)
+            return
+    # add parsing for multi part form data
+    request = Request(parsed_request)
+    server_response(request)
+
+
+def server_response(request):
+    request.route_regexes = routing.route_regexes
+    request.routes = routing.routes
+    print(request.route_regexes)
+    print(request.routes)
+    ctrl_fn = request.route_matcher()
     # dunder not required
-    if type(ctrl_fn).__name__ == "NoneType":
+    if ctrl_fn == None:
         not_found(conn_socket)
         conn_socket.shutdown(socket.SHUT_WR)
         conn_socket.close()
@@ -71,6 +79,6 @@ def server_response(conn_socket):
 
 while True:
     conn_socket, address = hs.accept()
-    t = threading.Thread(target=server_response, args=(conn_socket,))
+    t = threading.Thread(target=http_request_parser, args=(conn_socket,))
     t.start()
 hs.close()
