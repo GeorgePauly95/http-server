@@ -6,6 +6,5 @@ class Request:
         self.protocol = message["Protocol"]
         self.headers = message["headers"]
         self.body = ""
-        self.path_params = []
-        self.match = ""
+        self.path_params = ()
         self.controller = None

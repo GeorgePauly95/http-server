@@ -58,5 +58,6 @@ def journal_details(journalid):
 
 
 def controller(socket, request):
-    response = request.controller(request.path_params)
+    print(request.path_params)
+    response = request.controller(*request.path_params)
     socket.send(response)
