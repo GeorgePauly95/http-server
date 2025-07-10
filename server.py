@@ -1,8 +1,8 @@
 import socket
 import threading
-import routing
+from routing import route_matcher
 from JSON_Parser import parse_json
-from controllers import not_found
+from controllers import not_found, controller
 from request import Request
 
 hs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -10,6 +10,8 @@ hs.bind(("localhost", 2002))
 hs.listen(5)
 
 # rename and modularize
+
+
 def request_line_headers_parser(message):
     message_array = message.split("\r\n")
     [request_lines, *headers] = message_array
@@ -33,13 +35,17 @@ def http_request_parser(conn_socket):
         message = conn_socket.recv(10)
         complete_message += message
     request_line_headers, initial_body = complete_message.split(b"\r\n\r\n")
-    parsed_request = request_line_headers_parser(message=request_line_headers.decode("utf-8"))
+    parsed_request = request_line_headers_parser(
+        message=request_line_headers.decode("utf-8")
+    )
     if "Content-Length" in parsed_request["headers"].keys():
         msg_len = int(parsed_request["headers"]["Content-Length"]) - len(initial_body)
         request_body = b""
         while len(request_body) < msg_len:
             request_body += conn_socket.recv(1)
         complete_body = (initial_body + request_body).decode("utf-8").rstrip()
+        print(parsed_request)
+        print(parsed_request["headers"])
         if parsed_request["headers"]["Content-Type"] == "application/json":
             parsed_request["Body"] = parse_json(complete_body)
             request = Request(parsed_request)
@@ -52,29 +58,10 @@ def http_request_parser(conn_socket):
 
 
 def server_response(request):
-    request.route_regexes = routing.route_regexes
-    request.routes = routing.routes
-    print(request.route_regexes)
-    print(request.routes)
-    ctrl_fn = request.route_matcher()
-    # dunder not required
-    if ctrl_fn == None:
-        not_found(conn_socket)
-        conn_socket.shutdown(socket.SHUT_WR)
-        conn_socket.close()
-    elif type(ctrl_fn).__name__ == "tuple":
-        if type(ctrl_fn[1][0]).__name__ == "tuple":
-            ctrl_fn[0](conn_socket, *ctrl_fn[1][0])
-            conn_socket.shutdown(socket.SHUT_WR)
-            conn_socket.close()
-        else:
-            ctrl_fn[0](conn_socket, ctrl_fn[1][0])
-            conn_socket.shutdown(socket.SHUT_WR)
-            conn_socket.close()
-    elif type(ctrl_fn).__name__ == "function":
-        ctrl_fn(conn_socket)
-        conn_socket.shutdown(socket.SHUT_WR)
-        conn_socket.close()
+    routing_output = route_matcher(request)
+    controller(conn_socket, routing_output)
+    conn_socket.shutdown(socket.SHUT_WR)
+    conn_socket.close()
 
 
 while True:

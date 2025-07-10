@@ -38,9 +38,11 @@ def route_matcher(request):
     uri = request.uri
     for route_regex in route_regexes:
         if re.match(route_regex, uri) is not None:
+            print(f"This is the route regex matched: {route_regex}")
+            print(f"This is the matched route: {route_regexes[route_regex]}")
             request.match = True
             request.path_params = re.findall(route_regex, uri)[0]
-            print(f"Path params are: {request.path_params}")
+            print(request.path_params)
             request.controller = routes[route_regexes[route_regex]]
             print(request.controller.__name__)
             return request

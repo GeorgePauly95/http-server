@@ -1,40 +1,38 @@
-def not_found(socket):
+def not_found():
     response = b"""HTTP/1.1 404 NOT FOUND\r
 
                 Not a valid URL!"""
-    return socket.send(response)
+    return response
 
 
-def book_details(socket, isbn):
+def book_details(isbn):
     response = f"""HTTP/1.1 200 OK\r
 
                 books details: {isbn}!\n"""
-    return socket.send(response.encode())
+    return response.encode()
 
 
-def show_books(socket):
-    return socket.send(
-        b"""HTTP/1.1 200 OK\r
+def show_books():
+    return b"""HTTP/1.1 200 OK\r
 
                 show books!\n"""
-    )
 
 
-def borrow_book(socket, borrowid):
+def borrow_book(borrowid):
     response = f"""HTTP/1.1 200 OK\r
 
                 borrow books: {borrowid}!\n"""
-    return socket.send(response.encode())
+    return response.encode()
 
 
-def language_books(socket, language):
+def language_books(language):
     response = f"""HTTP/1.1 200 OK\r
 
                 language books: {language}!\n"""
-    return socket.send(response.encode())
+    return response.encode()
 
 
-def genre_books(socket, genre, year):
+def genre_books(genre, year):
 
     response = f"""HTTP/1.1 200 OK\r
 
@@ -42,20 +40,23 @@ def genre_books(socket, genre, year):
 
     year books: {year}!\n"""
 
-    return socket.send(response.encode())
+    return response.encode()
 
 
-def show_journals(socket):
-    return socket.send(
-        b"""HTTP/1.1 200 OK\r
+def show_journals():
+    return b"""HTTP/1.1 200 OK\r
 
     show journals!"""
-    )
 
 
-def journal_details(socket, journalid):
+def journal_details(journalid):
     response = f"""HTTP/1.1 200 OK\r
 
     journal details: {journalid}\n"""
 
-    return socket.send(response.encode())
+    return response.encode()
+
+
+def controller(socket, request):
+    response = request.controller(request.path_params)
+    socket.send(response)
