@@ -35,7 +35,7 @@ route_regexes = {regex_generator(route): route for route in routes}
 
 
 def route_matcher(request):
-    uri = request.uri
+    uri = query_params_checker(request)
     for route_regex in route_regexes:
         if re.match(route_regex, uri) is not None:
             request.controller = routes[route_regexes[route_regex]]
@@ -52,3 +52,20 @@ def route_matcher(request):
             return request
     request.controller = not_found
     return request
+
+
+def query_params_checker(request):
+    uri = request.uri
+    uri_pair = uri.split("?")
+    if len(uri_pair) == 1:
+        request.query_params = {}
+        return uri
+    query_params = uri_pair[1].split("&")
+    if len(query_params) == 1:
+        key, value = query_params[0].split("=")
+        request.query_params[key] = value
+        return uri_pair[0]
+    for query_param in query_params:
+        key, value = query_param.split("=")
+        request.query_params[key] = value
+    return uri_pair[0]
