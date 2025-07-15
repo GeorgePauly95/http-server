@@ -2,14 +2,15 @@ import socket
 import threading
 from routing import route_matcher
 from JSON_Parser import parse_json
-from controllers import not_found, controller
+from controllers import controller
 from request import Request
 
 hs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+hs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+hs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024)
 hs.bind(("localhost", 2002))
+# hs.settimeout(10)
 hs.listen(5)
-
-# rename and modularize
 
 
 def request_line_headers_parser(message):
@@ -52,7 +53,6 @@ def http_request_parser(conn_socket):
             request.body = parsed_request["Body"]
             server_response(request)
             return
-    # add parsing for multi part form data
     request = Request(parsed_request)
     server_response(request)
 
@@ -66,6 +66,9 @@ def server_response(request):
 
 while True:
     conn_socket, address = hs.accept()
+    threads = []
     t = threading.Thread(target=http_request_parser, args=(conn_socket,))
+    threads.append(t)
     t.start()
+    t.join()
 hs.close()

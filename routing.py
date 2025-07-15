@@ -1,6 +1,7 @@
 """Routing function"""
 
 import re
+from trie_router import initialnode, node
 from controllers import (
     book_details,
     show_books,
@@ -10,9 +11,10 @@ from controllers import (
     not_found,
     show_journals,
     journal_details,
+    static_controller,
 )
 
-routes = {
+routes_mapper = {
     "/books/genre/:genre/year/:year": genre_books,
     "/books/language/:language": language_books,
     "/books/:isbn": book_details,
@@ -21,9 +23,36 @@ routes = {
     "/journals/:journalid": journal_details,
     "/journals": show_journals,
 }
-route_regexes = {}
 
-# implement tree DS for routing!
+
+# for i in range(1, 101):
+#     route_path = f"/route_{i}"
+#     routes_mapper[route_path] = show_books
+
+# Trie routing
+
+# routes = node()
+#
+#
+# def splitter(word, delimiter):
+#     return word.split(delimiter)
+#
+#
+# for route in routes_mapper:
+#     uri_keys = splitter(route, "/")
+#     routes.add(uri_keys, routes_mapper[route])
+#
+#
+# def route_matcher(request):
+#     uri = query_params_checker(request)
+#     uri_keys = splitter(uri, "/")
+#     request.controller = routes.search(uri_keys)
+#     return request
+#
+
+# Regex routing
+
+route_regexes = {}
 
 
 def regex_generator(uri):
@@ -31,14 +60,14 @@ def regex_generator(uri):
     return path_regex
 
 
-route_regexes = {regex_generator(route): route for route in routes}
+route_regexes = {regex_generator(route): route for route in routes_mapper}
 
 
 def route_matcher(request):
     uri = query_params_checker(request)
     for route_regex in route_regexes:
         if re.match(route_regex, uri) is not None:
-            request.controller = routes[route_regexes[route_regex]]
+            request.controller = routes_mapper[route_regexes[route_regex]]
             path_params = re.findall(route_regex, uri)[0]
             if isinstance(path_params, str) is True:
                 if "/" in path_params:
@@ -61,10 +90,6 @@ def query_params_checker(request):
         request.query_params = {}
         return uri
     query_params = uri_pair[1].split("&")
-    if len(query_params) == 1:
-        key, value = query_params[0].split("=")
-        request.query_params[key] = value
-        return uri_pair[0]
     for query_param in query_params:
         key, value = query_param.split("=")
         request.query_params[key] = value
