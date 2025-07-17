@@ -1,7 +1,7 @@
-"""Routing function"""
+"""Regex routing"""
 
 import re
-from trie_router import initialnode, node
+
 from controllers import (
     book_details,
     show_books,
@@ -23,34 +23,6 @@ routes_mapper = {
     "/journals/:journalid": journal_details,
     "/journals": show_journals,
 }
-
-
-# for i in range(1, 101):
-#     route_path = f"/route_{i}"
-#     routes_mapper[route_path] = show_books
-
-# Trie routing
-
-# routes = node()
-#
-#
-# def splitter(word, delimiter):
-#     return word.split(delimiter)
-#
-#
-# for route in routes_mapper:
-#     uri_keys = splitter(route, "/")
-#     routes.add(uri_keys, routes_mapper[route])
-#
-#
-# def route_matcher(request):
-#     uri = query_params_checker(request)
-#     uri_keys = splitter(uri, "/")
-#     request.controller = routes.search(uri_keys)
-#     return request
-#
-
-# Regex routing
 
 route_regexes = {}
 

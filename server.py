@@ -1,6 +1,9 @@
 import socket
 import threading
-from routing import route_matcher
+
+from trie_router import route_matcher
+
+# from regex_router import route_matcher
 from JSON_Parser import parse_json
 from controllers import controller
 from request import Request
@@ -9,7 +12,6 @@ hs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 hs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 hs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024)
 hs.bind(("localhost", 2002))
-# hs.settimeout(10)
 hs.listen(5)
 
 
@@ -45,8 +47,6 @@ def http_request_parser(conn_socket):
         while len(request_body) < msg_len:
             request_body += conn_socket.recv(1)
         complete_body = (initial_body + request_body).decode("utf-8").rstrip()
-        print(parsed_request)
-        print(parsed_request["headers"])
         if parsed_request["headers"]["Content-Type"] == "application/json":
             parsed_request["Body"] = parse_json(complete_body)
             request = Request(parsed_request)

@@ -1,28 +1,59 @@
-class initialnode:
-    def __init__(self):
-        self.children = {}
-        self.value = None
+"""Trie routing"""
+
+from trie_class import node
+from controllers import (
+    book_details,
+    show_books,
+    borrow_book,
+    language_books,
+    genre_books,
+    not_found,
+    show_journals,
+    journal_details,
+)
+
+routes_mapper = {
+    "/books/genre/:genre/year/:year": genre_books,
+    "/books/language/:language": language_books,
+    "/books/:isbn": book_details,
+    "/books": show_books,
+    "/borrow/:borrowid": borrow_book,
+    "/journals/:journalid": journal_details,
+    "/journals": show_journals,
+}
+
+routes = node()
 
 
-class node:
-    def __init__(self):
-        self.root = initialnode()
-        self.children = {}
-        self.value = None
+def splitter(word, delimiter):
+    return word.split(delimiter)
 
-    def add(self, uri_keys, controller):
-        cur = self.root
-        for uri_key in uri_keys:
-            if uri_key not in cur.children:
-                cur.children[uri_key] = node()
-            cur = cur.children[uri_key]
-        cur.value = controller
 
-    def search(self, uri_keys):
-        cur = self.root
-        for uri_key in uri_keys:
-            if uri_key not in cur.children:
-                return None
-            print(f"children are: {cur.children}")
-            cur = cur.children[uri_key]
-        return cur.value
+for route in routes_mapper:
+    uri_keys = splitter(route, "/")
+    routes.add(uri_keys, routes_mapper[route])
+
+
+def route_matcher(request):
+    uri = query_params_checker(request)
+    uri_keys = splitter(uri, "/")
+    router_output = routes.search(uri_keys)
+    if router_output == "Not a Route!":
+        request.controller = not_found
+        return request
+    request.controller = router_output[0]
+    request.path_params = router_output[1]
+    return request
+
+
+def query_params_checker(request):
+    uri = request.uri
+    uri_pair = uri.split("?")
+    if len(uri_pair) == 1:
+        request.query_params = {}
+        return uri
+    query_params = uri_pair[1].split("&")
+    for query_param in query_params:
+        key, value = query_param.split("=")
+        request.query_params[key] = value
+    return uri_pair[0]

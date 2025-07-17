@@ -1,6 +1,3 @@
-import time
-
-
 def static_controller(request):
     response = f"""HTTP/1.1 200 OK\r
                 
@@ -65,18 +62,18 @@ def show_journals(request):
     response = f"""HTTP/1.1 200 OK\r
 
     show journals!"""
-    time.sleep(0.1)
     return response.encode()
 
 
 def journal_details(request):
     response = f"""HTTP/1.1 200 OK\r
 
-    journal details: {request.path_params}\n"""
+    journal details: {request.path_params[":journalid"]}\n"""
 
     return response.encode()
 
 
 def controller(socket, request):
     response = request.controller(request)
+
     socket.send(response)
