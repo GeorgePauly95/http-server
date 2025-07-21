@@ -1,6 +1,6 @@
 """Trie routing"""
 
-from trie_class import node
+from trie_class import Trie
 from controllers import (
     book_details,
     show_books,
@@ -13,16 +13,17 @@ from controllers import (
 )
 
 routes_mapper = {
-    "/books/genre/:genre/year/:year": genre_books,
-    "/books/language/:language": language_books,
+    "/books/genre/:genreid/year/:yearid": genre_books,
+    "/books/language/:languageid": language_books,
     "/books/:isbn": book_details,
     "/books": show_books,
     "/borrow/:borrowid": borrow_book,
     "/journals/:journalid": journal_details,
     "/journals": show_journals,
 }
-
-routes = node()
+for i in range(1, 1001):
+    routes_mapper[f"/path_{i}"] = show_books
+routes = Trie()
 
 
 def splitter(word, delimiter):

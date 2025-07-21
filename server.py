@@ -54,6 +54,7 @@ def http_request_parser(conn_socket):
             server_response(request)
             return
     request = Request(parsed_request)
+    print(request.headers)
     server_response(request)
 
 

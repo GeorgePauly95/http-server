@@ -11,12 +11,11 @@ from controllers import (
     not_found,
     show_journals,
     journal_details,
-    static_controller,
 )
 
 routes_mapper = {
-    "/books/genre/:genre/year/:year": genre_books,
-    "/books/language/:language": language_books,
+    "/books/genre/:genreid/year/:yearid": genre_books,
+    "/books/language/:languageid": language_books,
     "/books/:isbn": book_details,
     "/books": show_books,
     "/borrow/:borrowid": borrow_book,
@@ -41,6 +40,8 @@ def route_matcher(request):
         if re.match(route_regex, uri) is not None:
             request.controller = routes_mapper[route_regexes[route_regex]]
             path_params = re.findall(route_regex, uri)[0]
+            print(re.match(route_regex, uri), route_regex, uri)
+            print(path_params)
             if isinstance(path_params, str) is True:
                 if "/" in path_params:
                     return request
