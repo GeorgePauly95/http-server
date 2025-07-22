@@ -39,12 +39,10 @@ def route_matcher(request):
     uri = query_params_checker(request)
     uri_keys = splitter(uri, "/")
     router_output = routes.search(uri_keys)
-    if router_output == "Not a Route!":
-        request.controller = not_found
-        return request
-    request.controller = router_output[0]
+    if router_output == "Not a valid input!":
+        return request, (not_found, [])
     request.path_params = router_output[1]
-    return request
+    return request, router_output
 
 
 def query_params_checker(request):

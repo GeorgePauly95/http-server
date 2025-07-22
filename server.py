@@ -20,9 +20,9 @@ def request_line_headers_parser(message):
     [request_lines, *headers] = message_array
     request_line_array = request_lines.split(" ")
     request_dict = {
-        "Method": request_line_array[0],
-        "URI": request_line_array[1],
-        "Protocol": request_line_array[2],
+        "method": request_line_array[0],
+        "uri": request_line_array[1],
+        "protocol": request_line_array[2],
     }
     rest_dict = {
         header.split(": ")[0]: header.split(": ")[1]
@@ -48,9 +48,9 @@ def http_request_parser(conn_socket):
             request_body += conn_socket.recv(1)
         complete_body = (initial_body + request_body).decode("utf-8").rstrip()
         if parsed_request["headers"]["Content-Type"] == "application/json":
-            parsed_request["Body"] = parse_json(complete_body)
+            parsed_request["body"] = parse_json(complete_body)
             request = Request(parsed_request)
-            request.body = parsed_request["Body"]
+            request.body = parsed_request["body"]
             server_response(request)
             return
     request = Request(parsed_request)

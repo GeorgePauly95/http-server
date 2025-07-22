@@ -62,7 +62,8 @@ def journal_details(request):
     return response.encode()
 
 
-def controller(socket, request):
-    response = request.controller(request)
-
+def controller(socket, routing_output):
+    request = routing_output[0]
+    print(f"outputs: {routing_output[0]}, {routing_output[1]}")
+    response = routing_output[1][0](request)
     socket.send(response)

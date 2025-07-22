@@ -35,4 +35,4 @@ class Trie:
             child = self.children["WILDCARD"]
             path_params.append(key)
             return child.search(uri_keys, path_params)
-        return "Not a Route!"
+        return "Not a valid input!"
