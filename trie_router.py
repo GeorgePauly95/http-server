@@ -36,16 +36,18 @@ for route in routes_mapper:
 
 
 def route_matcher(request):
+    print("Route matcher is called!")
     uri = query_params_checker(request)
     uri_keys = splitter(uri, "/")
     router_output = routes.search(uri_keys)
-    if router_output == "Not a valid input!":
+    if router_output is None:
         return request, (not_found, [])
     request.path_params = router_output[1]
-    return request, router_output
+    return router_output[0]
 
 
 def query_params_checker(request):
+    print("Query params checker is called!")
     uri = request.uri
     uri_pair = uri.split("?")
     if len(uri_pair) == 1:
@@ -54,5 +56,6 @@ def query_params_checker(request):
     query_params = uri_pair[1].split("&")
     for query_param in query_params:
         key, value = query_param.split("=")
+        value = value.replace("%20", " ")
         request.query_params[key] = value
     return uri_pair[0]

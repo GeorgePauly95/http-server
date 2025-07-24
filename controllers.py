@@ -1,3 +1,25 @@
+def restrict_to_methods(methods=None):
+    if methods is None:
+        methods = []
+
+    def decorator(routing_output):
+        def wrapper(request):
+            if request.method in methods:
+                return routing_output(request)
+            return method_not_valid(request)
+
+        return wrapper
+
+    return decorator
+
+
+def method_not_valid(request):
+    response = """HTTP/1.1 405 Method Not Allowed\r
+
+                Incorrect Method!"""
+    return response.encode()
+
+
 def not_found(request):
     response = """HTTP/1.1 404 NOT FOUND\r
 
@@ -5,7 +27,9 @@ def not_found(request):
     return response.encode()
 
 
+@restrict_to_methods(methods=["GET"])
 def show_books(request):
+    print("The view function is called!")
     response = f"""HTTP/1.1 200 OK\r
 
                 show books!\n
@@ -14,6 +38,7 @@ def show_books(request):
     return response.encode()
 
 
+@restrict_to_methods(methods=["GET", "POST"])
 def book_details(request):
     response = f"""HTTP/1.1 200 OK\r
 
@@ -22,6 +47,7 @@ def book_details(request):
     return response.encode()
 
 
+@restrict_to_methods(methods=["GET"])
 def borrow_book(request):
     response = f"""HTTP/1.1 200 OK\r
 
@@ -29,6 +55,7 @@ def borrow_book(request):
     return response.encode()
 
 
+@restrict_to_methods(methods=["GET"])
 def language_books(request):
     response = f"""HTTP/1.1 200 OK\r
 
@@ -36,6 +63,7 @@ def language_books(request):
     return response.encode()
 
 
+@restrict_to_methods(methods=["GET"])
 def genre_books(request):
     response = f"""HTTP/1.1 200 OK\r
 
@@ -46,6 +74,7 @@ def genre_books(request):
     return response.encode()
 
 
+@restrict_to_methods(methods=["GET"])
 def show_journals(request):
     response = """HTTP/1.1 200 OK\r
 
@@ -53,8 +82,8 @@ def show_journals(request):
     return response.encode()
 
 
+@restrict_to_methods(methods=["GET"])
 def journal_details(request):
-    print(request.path_params)
     response = f"""HTTP/1.1 200 OK\r
 
     journal details: {request.path_params[0]}\n"""
@@ -62,8 +91,7 @@ def journal_details(request):
     return response.encode()
 
 
-def controller(socket, routing_output):
-    request = routing_output[0]
-    print(f"outputs: {routing_output[0]}, {routing_output[1]}")
-    response = routing_output[1][0](request)
+def controller(socket, request, routing_output):
+    print("The controller is called!")
+    response = routing_output(request)
     socket.send(response)

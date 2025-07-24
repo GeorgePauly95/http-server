@@ -1,8 +1,13 @@
 """Trie class"""
 
+i = 0
+
 
 class Trie:
     def __init__(self):
+        global i
+        i += 1
+        print(f"The Trie object no: {i} is created!")
         self.children = {}
         self.value = None
 
@@ -35,4 +40,4 @@ class Trie:
             child = self.children["WILDCARD"]
             path_params.append(key)
             return child.search(uri_keys, path_params)
-        return "Not a valid input!"
+        return None
