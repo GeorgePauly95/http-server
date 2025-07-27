@@ -16,7 +16,6 @@ hs.listen(5)
 
 
 def request_line_headers_parser(message):
-    print("Request line headers parser is called!")
     message_array = message.split("\r\n")
     [request_lines, *headers] = message_array
     request_line_array = request_lines.split(" ")
@@ -34,7 +33,6 @@ def request_line_headers_parser(message):
 
 
 def http_request_parser(conn_socket):
-    print("http_parser is called!")
     complete_message = b""
     while b"\r\n\r\n" not in complete_message:
         message = conn_socket.recv(10)
@@ -53,15 +51,15 @@ def http_request_parser(conn_socket):
             parsed_request["body"] = parse_json(complete_body)
             request = Request(parsed_request)
             request.body = parsed_request["body"]
+            print(parsed_request)
             server_response(request)
             return
+    print(parsed_request)
     request = Request(parsed_request)
-    print(request.headers)
     server_response(request)
 
 
 def server_response(request):
-    print("Server response is called!")
     routing_output = route_matcher(request)
     controller(conn_socket, request, routing_output)
     conn_socket.shutdown(socket.SHUT_WR)
@@ -71,12 +69,10 @@ def server_response(request):
 i = 0
 while True:
     i += 1
-    print(f"The while loop no: {i} has started!")
     conn_socket, address = hs.accept()
     threads = []
     t = threading.Thread(target=http_request_parser, args=(conn_socket,))
     threads.append(t)
     t.start()
-    print("Thread is created!")
     t.join()
 hs.close()

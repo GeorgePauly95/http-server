@@ -1,5 +1,6 @@
 """Trie routing"""
 
+from urllib.parse import unquote, unquote_plus
 from trie_class import Trie
 from controllers import (
     book_details,
@@ -47,15 +48,15 @@ def route_matcher(request):
 
 
 def query_params_checker(request):
-    print("Query params checker is called!")
     uri = request.uri
+    uri = unquote(uri)
     uri_pair = uri.split("?")
     if len(uri_pair) == 1:
         request.query_params = {}
         return uri
-    query_params = uri_pair[1].split("&")
+    query_params = unquote_plus(uri_pair[1]).split("&")
     for query_param in query_params:
         key, value = query_param.split("=")
-        value = value.replace("%20", " ")
+        # value = value.replace("%20", " ")
         request.query_params[key] = value
     return uri_pair[0]

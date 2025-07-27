@@ -1,13 +1,8 @@
 """Trie class"""
 
-i = 0
-
 
 class Trie:
     def __init__(self):
-        global i
-        i += 1
-        print(f"The Trie object no: {i} is created!")
         self.children = {}
         self.value = None
 
