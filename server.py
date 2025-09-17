@@ -12,7 +12,7 @@ hs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 hs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 hs.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024)
 hs.bind(("localhost", 2002))
-hs.listen(5)
+hs.listen(100)
 
 
 def request_line_headers_parser(message):
@@ -41,6 +41,11 @@ def http_request_parser(conn_socket):
     parsed_request = request_line_headers_parser(
         message=request_line_headers.decode("utf-8")
     )
+    # handle connection function.
+    # 1. checks if connection header is present in parsed request
+    # 2. if value is keep-alive, conn_socket should not be closed.
+    # 3. if value is close, it should behave as it does now.
+    # 4. will handle close, and keep alive values. there is also upgrade, which will require extra reading
     if "Content-Length" in parsed_request["headers"].keys():
         msg_len = int(parsed_request["headers"]["Content-Length"]) - len(initial_body)
         request_body = b""
@@ -52,27 +57,32 @@ def http_request_parser(conn_socket):
             request = Request(parsed_request)
             request.body = parsed_request["body"]
             print(parsed_request)
-            server_response(request)
+            server_response(conn_socket, request)
             return
     print(parsed_request)
     request = Request(parsed_request)
-    server_response(request)
+    server_response(conn_socket, request)
 
 
-def server_response(request):
+def server_response(conn_socket, request):
     routing_output = route_matcher(request)
     controller(conn_socket, request, routing_output)
+    print(request.headers["Connection"])
+    # if request.headers["Connection"] == "keep-alive":
+    # elif request.headers["Connection"] == "close":
     conn_socket.shutdown(socket.SHUT_WR)
     conn_socket.close()
 
 
-i = 0
-while True:
-    i += 1
-    conn_socket, address = hs.accept()
-    threads = []
-    t = threading.Thread(target=http_request_parser, args=(conn_socket,))
-    threads.append(t)
-    t.start()
-    t.join()
-hs.close()
+try:
+    while True:
+        conn_socket, address = hs.accept()
+        # threads = []
+        t = threading.Thread(target=http_request_parser, args=(conn_socket,))
+        # threads.append(t)
+        t.daemon = True
+        t.start()
+        # t.join()
+
+except:
+    hs.close()

@@ -29,7 +29,6 @@ def not_found(request):
 
 @restrict_to_methods(methods=["GET"])
 def show_books(request):
-    print("The view function is called!")
     response = f"""HTTP/1.1 200 OK\r
 
                 show books!\n
@@ -92,6 +91,5 @@ def journal_details(request):
 
 
 def controller(socket, request, routing_output):
-    print("The controller is called!")
     response = routing_output(request)
     socket.send(response)
