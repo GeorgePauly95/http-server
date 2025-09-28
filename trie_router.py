@@ -11,6 +11,7 @@ from controllers import (
     not_found,
     show_journals,
     journal_details,
+    home,
 )
 
 routes_mapper = {
@@ -21,6 +22,7 @@ routes_mapper = {
     "/borrow/:borrowid": borrow_book,
     "/journals/:journalid": journal_details,
     "/journals": show_journals,
+    "/": home,
 }
 for i in range(1, 1001):
     routes_mapper[f"/path_{i}"] = show_books

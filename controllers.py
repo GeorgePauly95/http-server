@@ -90,6 +90,13 @@ def journal_details(request):
     return response.encode()
 
 
+def home(request):
+    response = """HTTP/1.1 200 OK\r
+    HEY!
+    """
+    return response.encode()
+
+
 def controller(socket, request, routing_output):
     response = routing_output(request)
     socket.send(response)
