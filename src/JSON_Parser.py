@@ -33,7 +33,7 @@ def parse_number(input_string):
         final_output = float(data[0])
         return final_output, input_string[len(data[0]) :]
     final_output = int(data[0])
-    return final_output, input_string[len(data[0]): ]
+    return final_output, input_string[len(data[0]) :]
 
 
 def parse_string(input_string):

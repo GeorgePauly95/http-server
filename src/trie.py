@@ -1,7 +1,6 @@
-"""Trie class"""
-
-
 class Trie:
+    """Trie class used to store routes and controllers"""
+
     def __init__(self):
         self.children = {}
         self.value = None
